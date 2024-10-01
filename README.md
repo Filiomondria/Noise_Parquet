@@ -17,3 +17,9 @@ In short, this is how the algorithm generates an image with superimposed non-uni
 More information you can find in Thesis.pdf, but this document was writing in polish leanguage.
 
 ![Input image](my_image.png)
+
+![Output image](Check.png)
+
+![Input image Thunder](thunder.JPG)
+
+![Output image Thunder](Thunder.png)
