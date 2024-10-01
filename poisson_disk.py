@@ -5,9 +5,9 @@ from PIL import Image
 
 class Disk:
     '''
-    Klasa stworzona do tworznia szumów
+    Klasa stworzona do tworznia szumów.
     '''
-    def __init__(self, height, width, sample_size, r = 4, amount = 10, k = 4):
+    def __init__(self, height, width, sample_size, r = 4, amount = 5000, k = 4):
         self.height = height
         self.width = width
         self.r = r
@@ -17,7 +17,7 @@ class Disk:
   
     def poisson_disc_samples(self, list_points):
         '''
-        Funkcja tworzy dyski poissona na zadanej płaszczyźnie
+        Funkcja tworzy dyski poissona na zadanej płaszczyźnie.
         '''
         N = 2 # bazujemy na wymiarze 2D
         cellsize = self.r / sqrt(N)
@@ -31,6 +31,9 @@ class Disk:
         
         #Funkcja do sprawdzania kolizji 
         def valid_point(p,gx,gy):
+            """
+            Zajdowanie punktów w obrębie nowo utworzonego szumu.
+            """
 
             if not (0 <= p[0] < self.height and 0 <= p[1] < self.width):
                     return False
@@ -122,43 +125,52 @@ class Disk:
         return matrix #czy raczej self.matrix
 
     
-    def sample_noise(self):
+    def sample_noise(self, image = None):
         '''
         punkt to lewy górny wierzchołek próbki
         1 Etap. Losujemy punkt  z index row and col z przedziału [0,size - sample_size]
         2 Etap. Losujemy punkt z uwzględnieniem próbki 1, tak więc bierzemy dolny index row próbki i mamy ograniczenie dla przedziału row, przedział dla kolumn się nie zmienia.
         3 Etap. Losujemy punkt z uwzględnieniem próbki 1 i 2, najperw sprawdzamy czy punkt próbki 2 jest równy size - sample_size, jeśli tak to ograniczamy 
         '''
-
         amount = 4
-        size = (self.height, self.width)
-        matrix_noise = self.noise_matrix()
+        if image == None:
+            size = (self.height, self.width)
+            matrix_noise = self.noise_matrix()
+            
+        else:
+            image = Image.open(image)
+            matrix_noise = np.copy(np.asarray(image.convert('L')))
+            size =  matrix_noise.shape
+       
         sample_list = []
 
         # i to kolumna a j to wiersz
 
-        # zedytować to trzeba, zapomniałem o granicach
+        # thereshold is r
+        self.r = int(np.ceil(self.r))
         mask = np.zeros(size)
         for _ in range(amount):
             if _ == 0:
-                mask[4:size[0] - self.sample_size, 4:size[1] - self.sample_size] = 1
+                mask[self.r : size[0] - (self.sample_size + 2*self.r), self.r : size[1] - (self.sample_size + 2*self.r)] = 1
             if _ == 1:
-                mask[size[0] - self.sample_size:-5, 4:size[1] - self.sample_size] = 1
+                mask[size[0] - (self.sample_size + 2*self.r) : -self.r, self.r : size[1] - (self.sample_size + 2*self.r)] = 1
             if _ == 2:
-                mask[4:size[0] - self.sample_size, size[1] - self.sample_size:-5] = 1
+                mask[self.r : size[0] - (self.sample_size + 2*self.r), size[1] - (self.sample_size + 2*self.r) : -self.r] = 1
             if _ == 3:
-                mask[size[0] - self.sample_size:-5, size[1] - self.sample_size:-5] = 1
+                mask[size[0] - (self.sample_size + 2*self.r) : -self.r, size[1] - (self.sample_size + 2*self.r) : -self.r] = 1
+
+
             not_found = True
             points_active = np.argwhere(mask == 1)
             while not_found:
-
                 random_index = np.random.choice(len(points_active))
                 point = points_active[random_index]
                 if point[0] + self.sample_size < size[0] and point[1] + self.sample_size < size[1]:
                     if mask[point[0] + self.sample_size, point[1]] == 1 and mask[point[0], point[1] + self.sample_size] == 1 and mask[point[0] + self.sample_size,point[1] + self.sample_size] == 1:
                         not_found = False
-                        sample_list.append(matrix_noise[point[0]:point[0] + self.sample_size, point[1]:point[1] + self.sample_size])
-                        mask[point[0]:point[0] + self.sample_size, point[1]:point[1] + self.sample_size] = 0
+                        sample_list.append(matrix_noise[point[0] : point[0] + self.sample_size, point[1] : point[1] + self.sample_size])
+                        #important we have to make a frame around a choosen samples, they camnot be dependend of each other
+                        mask[point[0] - self.r : point[0] + (self.sample_size + self.r), point[1] - self.r : point[1] + (self.sample_size + self.r)] = 0
                     else:
                         points_active = np.delete(points_active, random_index, axis = 0)
                 else:
@@ -170,5 +182,3 @@ class Disk:
         noise = self.noise_matrix()
         map = Image.fromarray(((1-noise)*255).astype(np.uint8), mode='L')
         map.save(name + '.png')
-
-
