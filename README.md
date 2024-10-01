@@ -14,3 +14,6 @@ Using pixel brightness and the accept-reject method, we apply or do not apply no
 
 In short, this is how the algorithm generates an image with superimposed non-uniform noise.
 
+More information you can find in Thesis.pdf, but this document was writing in polish leanguage.
+
+![Input image](my_image.png)

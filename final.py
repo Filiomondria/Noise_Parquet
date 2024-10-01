@@ -234,7 +234,7 @@ class Inhomogeneous_Noise:
 
 
 
-p = Inhomogeneous_Noise(r'C:\Users\foszc\OneDrive\Pulpit\engineering thesis\thunder.JPG')
+p = Inhomogeneous_Noise(r'my_image.png')
 
-p.final('Final')
+p.final('Check')
 
